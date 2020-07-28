@@ -77,10 +77,23 @@ Your repack file is now ready for docker. Move it to an empty folder and add the
 
 Note
 
-1 - we're building on Ubuntu20.x, I picked this mostly to play it safe, older versions or Debian might work too.
-2 - I had to add libmariadbclient-dev, which is somehow not installed by the trinitycore installer
-3 - TrintyCore has a hard dependency on libreadline7, but Ubuntu 20.04 has libreadline8, so I needed to remove one and force in the other.
-4 - create the trinitycore user, trinity expects to have this user.
-5 - after install explicitly downloaded deb packages, clean them up to save space
-6 - the start command does nothing - the container will just idle. This is useful for debugging and setting up, we'll set the actual start commands using compose.
+- we're building on Ubuntu20.x, I picked this mostly to play it safe, older versions or Debian might work too.
+- I had to add libmariadbclient-dev, which is somehow not installed by the trinitycore installer
+- TrintyCore has a hard dependency on libreadline7, but Ubuntu 20.04 has libreadline8, so I needed to remove one and force in the other.
+- create the trinitycore user, trinity expects to have this user.
+- after install explicitly downloaded deb packages, clean them up to save space
+- the start command does nothing - the container will just idle. This is useful for debugging and setting up, we'll set the actual start commands using compose.
+    
+in the folder with the dockerifle, build with
+    
+    docker build -t trinitycore .
+    
+To get your container onto a remote server you can try pushing it to a container repo. If you're uncomfortable storing such a large image, you can transfer it directly as a file using
+
+    docker save trinitycore > trinitycore.docker.tar
+    
+Then FTP the tar to whatever server you want to run it on and extract with
+
+    docker load -i trinitycore.docker.tar
+    
     
