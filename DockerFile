@@ -4,18 +4,18 @@ FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
-    && apt-get install -y libboost-system \
-    && apt-get install -y libboost-filesystem \
-    && apt-get install -y libboost-thread \
-    && apt-get install -y libboost-program-options \
-    && apt-get install -y libboost-iostreams \
-    && apt-get install -y libboost-regex \
+    && apt-get install -y libboost-system1.71.0 \
+    && apt-get install -y libboost-filesystem1.71.0 \
+    && apt-get install -y libboost-thread1.71.0 \
+    && apt-get install -y libboost-program-options1.71.0 \
+    && apt-get install -y libboost-iostreams1.71.0 \
+    && apt-get install -y libboost-regex1.67.0 \
     && apt-get install -y mariadb-client \
     && apt-get install -y libmariadbclient-dev \
     && apt-get install -y libreadline8 \
     && adduser -q -u 1000 trinitycore
 
-COPY ./trinitycore /opt/trinitycore
+COPY . /opt/trinitycore
 
 ENV DEBIAN_FRONTEND=
 
