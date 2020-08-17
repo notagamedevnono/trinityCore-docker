@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y libboost-thread1.71.0 \
     && apt-get install -y libboost-program-options1.71.0 \
     && apt-get install -y libboost-iostreams1.71.0 \
-    && apt-get install -y libboost-regex1.67.0 \
+    && apt-get install -y libboost-regex1.71.0 \
     && apt-get install -y mariadb-client \
     && apt-get install -y libmariadbclient-dev \
     && apt-get install -y libreadline8 \
