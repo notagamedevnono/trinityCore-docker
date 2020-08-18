@@ -44,4 +44,4 @@
 
 ### Starting from scratch 
 
-If you have no existing TrinityCore database to restore, see the [start from scratch](clear_server.md) guide.
+If you have no existing TrinityCore database to restore, see the [start from scratch](clean_server.md) guide.
