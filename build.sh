@@ -6,7 +6,7 @@ SRC_FOLDER=$(readlink -f ../trinitysrc)
 BUILD_FOLDER=/opt/trinitycore
 CONTAINER_FOLDER=$(readlink -f ../trinityContainers)
 BUILD_TAG=
-BUILD_CORE_COUNT=6
+BUILD_THREAD_COUNT=8
 
 # clean out target folder
 rm -rf $BUILD_FOLDER
@@ -55,30 +55,37 @@ update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100 &&
 # configure and build
 cd $SRC_FOLDER &&
 rm -rf build &&
-mkdir build &&
+mkdir -p build &&
 cd build &&
 cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER &&
-make -j $BUILD_CORE_COUNT &&
+make -j $BUILD_THREAD_COUNT &&
 make install &&
 
 
-# extract client data 
+# clean up client folder
 cd $CLIENT_FOLDER &&
-rm -rf maps &&
+rm -rf Buildings &&
+rm -rf Cameras &&
+rm -rf dbc && 
+rm -rf maps
+rm -rf mmaps &&
+rm -rf vmaps &&
+
+
+# extract client data
 ${BUILD_FOLDER}/bin/mapextractor &&
-mkdir ${BUILD_FOLDER}/data &&
+mkdir -p ${BUILD_FOLDER}/data &&
 cp -r dbc maps ${BUILD_FOLDER}/data &&
 
-rm -rf vmaps &&
 ${BUILD_FOLDER}/bin/vmap4extractor &&
 mkdir vmaps &&
 ${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps &&
 cp -r vmaps ${BUILD_FOLDER}/data &&
 
-rm -rf mmaps && 
 mkdir mmaps &&
 ${BUILD_FOLDER}/bin/mmaps_generator &&
 cp -r mmaps ${BUILD_FOLDER}/data &&
+
 
 
 # get stock conf files
@@ -93,7 +100,6 @@ cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}/sql &&
 wget https://github.com/TrinityCore/TrinityCore/releases/download/$FULLDATABASE.7z -O ${BUILD_FOLDER}/bin/fulldb.7z &&
 7z x ${BUILD_FOLDER}/bin/fulldb.7z -O ${BUILD_FOLDER}/bin &&
 rm ${BUILD_FOLDER}/bin/fulldb.7z &&
-
 
 # build docker image
 cd ${BUILD_FOLDER}
