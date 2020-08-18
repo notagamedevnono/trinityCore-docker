@@ -45,3 +45,23 @@
 ### Starting from scratch 
 
 If you have no existing TrinityCore database to restore, see the [start from scratch](clean_server.md) guide.
+
+### Restoring from backups
+
+If you have existing TrinityCore database backups, see the [restore](restore_from_backups.md) guide.
+
+### Backing up TrinityCore
+
+Backing up TrinityCore running in Docker is pretty straight forward. 
+
+- Uploaded the included `backup.sh` script to your Trinitycore Solution folder
+- Make it executable
+
+      sudo chmod +x backup.sh
+      
+-  Generate a backup
+
+      sudo ./backup.sh
+      
+   Backups will be written to the /dbdumps folder, and will be marked for day's date. A single backup file contains backups of all three databases, archived.
+   
