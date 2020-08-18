@@ -1,6 +1,11 @@
 # trinityCore-docker
 
-TrinityCore in a docker container.
+- A full build system for TrinityCore 3.3.5
+- Requires minimal setup, does _everything_ for you.
+- Produces local binaries and a fully-featured docker container that can be easily transferred to other systemms and mounted there.
+- Can be run continuously to create new containers based on the latest tag in the 3.3.5 branch.
+- Includes a handy SQL backup script that will back your Mysql container data up.
+- Includes instructions to mount a new server, or restore a server from SQL backups.
 
 ## Requires
 
@@ -21,8 +26,9 @@ TrinityCore in a docker container.
 - Run build
 
       sudo ./build.sh
-      
-Your docker container will be placed in a zip file in ~/trinityContainers
+  
+- Your build binaries will be placed in /opt/trinitycore
+- Your docker container will be placed in a zip file in ~/trinityContainers
 
 
 
