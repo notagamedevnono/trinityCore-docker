@@ -1,3 +1,4 @@
+# Creates a trinityCore server for both auth and world server
 FROM ubuntu:20.04
 
 # squelches tzdata's install prompt
@@ -19,4 +20,7 @@ COPY . /opt/trinitycore
 
 ENV DEBIAN_FRONTEND=
 
+# by default, this containers will idle and do nothing. This is needed to easily run Trinity in "attended" mode
+# when creating a clean server instance. Set the TrinityCore start process from Docker-compose file.
+# See README.md for details
 CMD ["/bin/bash", "-c", "while true ;sleep 5; do continue; done"]
