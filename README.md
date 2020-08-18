@@ -115,7 +115,7 @@
       
 - Edit worldserver.conf again and disable console
 
-      Console.Enable=1
+      Console.Enable=0
       
    We do this so TrinityCore will run in "daemon" mode,  if we don't the console prompt waiting for user input will flood your docker logs
    
@@ -125,4 +125,4 @@
       docker-compose down
       docker-compose up -d
       
-- Your TrinityCore server is ready to use.
+- Your TrinityCore server is ready to use. For further admin, telnet in to @ your Docker host IP and port 3443, use your GM credentials.
