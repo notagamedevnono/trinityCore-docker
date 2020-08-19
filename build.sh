@@ -31,6 +31,9 @@ BUILD_FOLDER=/opt/trinitycore
 # container repo, so we're transferring images as bin files
 CONTAINER_FOLDER=$(readlink -f ../trinityContainers)
 
+# number of threads to use for build. You want to build at full tilt, it speeds the build up tremendously
+BUILD_THREAD_COUNT=18
+
 # if you want to force this script to build a specific tag, set it here. Use tags only, don't built arbitrary 
 # hashes, this script hasn't been tested to work with hashes
 BUILD_TAG=
@@ -95,7 +98,7 @@ rm -rf build
 mkdir -p build
 cd build
 cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
-make
+make -j $BUILD_THREAD_COUNT
 make install
 
 
