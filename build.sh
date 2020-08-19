@@ -46,7 +46,7 @@ CWD=$(pwd)
 
 # clone or pull trinity src
 if [ ! -d $SRC_FOLDER ]; then
-    git clone -b 3.3.5 git://github.com/TrinityCore/TrinityCore.git $SRC_FOLDER &&
+    git clone -b 3.3.5 git://github.com/TrinityCore/TrinityCore.git $SRC_FOLDER 
 else
     cd $SRC_FOLDER 
     git reset --hard &&
