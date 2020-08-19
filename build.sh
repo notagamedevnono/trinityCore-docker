@@ -51,7 +51,8 @@ CWD=$(pwd)
 if [ ! -d $SRC_FOLDER ]; then
     git clone -b 3.3.5 git://github.com/TrinityCore/TrinityCore.git $SRC_FOLDER 
 else
-    cd $SRC_FOLDER 
+    cd $SRC_FOLDER
+    git checkout 3.3.5
     git reset --hard
     git clean -f
     git pull
@@ -115,11 +116,11 @@ mkdir -p ${BUILD_FOLDER}/data
 cp -r dbc maps ${BUILD_FOLDER}/data
 
 ${BUILD_FOLDER}/bin/vmap4extractor
-mkdir vmaps
+mkdir -p vmaps
 ${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
 cp -r vmaps ${BUILD_FOLDER}/data
 
-mkdir mmaps
+mkdir -p mmaps
 ${BUILD_FOLDER}/bin/mmaps_generator
 cp -r mmaps ${BUILD_FOLDER}/data
 
