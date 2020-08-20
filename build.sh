@@ -139,7 +139,7 @@ cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}/sql
 
 # download that honking big full database file and unpack it to /bin
 wget https://github.com/TrinityCore/TrinityCore/releases/download/${FULL_DATABASE_FRAGMENT}.7z -O ${BUILD_FOLDER}/bin/fulldb.7z
-7z x ${BUILD_FOLDER}/bin/fulldb.7z -O ${BUILD_FOLDER}/bin
+7z x ${BUILD_FOLDER}/bin/fulldb.7z -o${BUILD_FOLDER}/bin
 rm ${BUILD_FOLDER}/bin/fulldb.7z
 
 # build docker image using the Dockerfile in this repo. 
