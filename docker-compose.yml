@@ -13,7 +13,6 @@ services:
         expose:
         - '3306'
         environment:
-             # if you're exposing your mysql server, you probably want a saner password
             - MYSQL_ROOT_PASSWORD=root   
             - MYSQL_PASSWORD=root        
         restart: unless-stopped
