@@ -7,7 +7,7 @@ services:
             - ./mysql:/var/lib/mysql
             - ./dbdumps:/var/dbdumps
             - ./dbrestore:/var/dbrestore
-            - /etc/localtime:/etc/localtime:ro
+            - ./conduit:/var/trinityscripts:rw
         ports:
         - 3306:3306
         expose:
@@ -29,10 +29,12 @@ services:
         - 3443:3443 # used for remote access via telnet
         volumes:
             - ./worldserver.conf:/opt/trinitycore/etc/worldserver.conf
+            - /etc/localtime:/etc/localtime:ro
+            - ./conduit:/var/trinityscripts:rw
         depends_on:
         - db
         restart: unless-stopped
-        # uncomment this line to start trinity 
+        # uncomment this line to when you are ready to start trinity
         # command: /bin/sh -c "cd /opt/trinitycore/bin && ./worldserver"
         networks:
             - trinity_network
@@ -44,11 +46,12 @@ services:
         - 3724:3724
         volumes:
             - ./authserver.conf:/opt/trinitycore/etc/authserver.conf
+            - /etc/localtime:/etc/localtime:ro
         depends_on:
         - world
         - db
         restart: unless-stopped
-        # uncomment this line to start trinity
+        # uncomment this line to when you are ready to start trinity
         # command: /bin/sh -c  "cd /opt/trinitycore/bin && ./authserver"
         networks:
             - trinity_network
