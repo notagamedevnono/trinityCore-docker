@@ -135,7 +135,7 @@ mv ${BUILD_FOLDER}/etc/authserver.conf.dist ${BUILD_FOLDER}/etc/authserver.conf
 
 # get sql files and put them in /sql folder
 mkdir -p ${BUILD_FOLDER}/sql
-cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}/sql
+cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}
 
 # download that honking big full database file and unpack it to /bin
 wget https://github.com/TrinityCore/TrinityCore/releases/download/${FULL_DATABASE_FRAGMENT}.7z -O ${BUILD_FOLDER}/bin/fulldb.7z
