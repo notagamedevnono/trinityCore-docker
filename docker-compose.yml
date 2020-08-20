@@ -21,7 +21,7 @@ services:
             - trinity_network
 
     world:
-        image: trinitycore:<TAG-HERE!>
+        image: trinitycore
         container_name: trinity-world
         ports:
         - 8085:8085
@@ -38,7 +38,7 @@ services:
             - trinity_network
 
     auth:
-        image: trinitycore:<TAG-HERE!>
+        image: trinitycore
         container_name: trinity-auth
         ports:
         - 3724:3724
