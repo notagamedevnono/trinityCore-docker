@@ -54,14 +54,10 @@ If you have existing TrinityCore database backups, see the [restore](restore_fro
 
 Backing up TrinityCore running in Docker is pretty straight forward. 
 
-- Uploaded the included `backup.sh` script to your Trinitycore Solution folder
-- Make it executable
+- Uploaded the included `backup.sh` script to your TrinityCore solution folder
+-  Run it
 
-      sudo chmod +x backup.sh
+      sh ./backup.sh
       
--  Generate a backup
-
-      sudo ./backup.sh
-      
-   Backups will be written to the /dbdumps folder, and will be marked for day's date. A single backup file contains backups of all three databases, archived.
+   Backups will be written to the /dbdumps folder - three files are created : `auth.sql`, `characters.sql` and `world.sql`. You probably want to modify this backup script to do something more advanced, f.ex, you can zip all three files up together and transfer them to a storage server for safe-keeping.
    
