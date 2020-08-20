@@ -71,14 +71,14 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
       docker exec -it trinity-db bash -c "mysql -u root -proot  < /var/trinityscripts/create_mysql.sql"
       
   This creates empty databases needed by Trinitycore.    
-
     
-- Create a GM account - shell into your world server and start trinity manually
+- Shell into your world server and start trinity manually
 
       docker exec -it trinity-world bash
-      /opt/trinitycore/bin/worldserver
+      cd /opt/trinitycore/bin
+      ./worldserver
       
-   Trinity will self-init its database and wait for input from you. Create your GM account
+   Give TrinityCore a minute to self-initialize its database. You'll eventually see a `TC>` prompt when it's ready. Create your GM account
    
       .account create YOURGMNAME YOURPASSWORD
       .account set gmlevel YOURGMNAME 3
@@ -90,16 +90,16 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
       
 - Edit worldserver.conf again and disable console
 
-      Console.Enable=0
+      Console.Enable = 0
       
    We do this so TrinityCore will run in "daemon" mode,  if we don't the console prompt waiting for user input will flood your docker logs
-
-- Uncomment the two `command` lines in docker-compose.yml, and restart your solution
-      
-      docker-compose up -d --force-recreate
 
 - Add your realm IP : TrinityCore requires that your server's IP is added to the realmlist table. Figure out what your Docker host machine IP is then run this
 
       docker exec -it trinity-db bash -c "mysql -u root -proot -D auth -e \"UPDATE realmlist SET address='YOUR-IP-HERE' \" "  
+      
+- Uncomment the two `command` lines in docker-compose.yml, and restart your solution
+      
+      docker-compose up -d --force-recreate
 
 - Your TrinityCore server is ready to use. For further admin, telnet in to @ your Docker host IP and port 3443, use your GM credentials.
