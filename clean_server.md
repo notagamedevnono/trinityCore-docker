@@ -43,7 +43,7 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
 
       - change the data directory to
       
-            DataDir = "../Data"
+            DataDir = "../data"
             
       - enable remote access so you can administer your server via telnet
 
@@ -72,16 +72,11 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
       
   This creates empty databases needed by Trinitycore.    
 
-- Uncomment the two `command` lines in docker-compose.yml, and restart your solution
-      
-      docker-compose down
-      docker-compose up -d
     
 - Create a GM account - shell into your world server and start trinity manually
 
       docker exec -it trinity-world bash
-      cd /opt/trinitycore/bin
-      ./worldserver
+      /opt/trinitycore/bin/worldserver
       
    Trinity will self-init its database and wait for input from you. Create your GM account
    
@@ -98,7 +93,10 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
       Console.Enable=0
       
    We do this so TrinityCore will run in "daemon" mode,  if we don't the console prompt waiting for user input will flood your docker logs
-   
+
+- Uncomment the two `command` lines in docker-compose.yml, and restart your solution
+      
+      docker-compose up -d --force-recreate
 
 - Add your realm IP : TrinityCore requires that your server's IP is added to the realmlist table. Figure out what your Docker host machine IP is then run this
 
