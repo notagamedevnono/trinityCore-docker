@@ -1,31 +1,33 @@
 ### Starting a server from scratch
 
-See the [readme.md](-/README.md) for Docker host requirements. Your TrinityCore container will be zipped down to file based with a name like 
+See the [readme.md](-/README.md) for Docker host requirements. Your build script will create a TrinityCore container zipped down to a file with a name like 
 
       trinitycore-docker.TDB335.20081.2020-08-20.7z 
 
-In this example the tag is `TDB335.20081`. Tags are like version numbers. Note the tag for the container zip you'll be deploying.
+In this example the container tag is `TDB335.20081`. Tags are like version numbers. Note the tag for the container you'll be deploying.
 
 - Transfer your TrinityCore container zip to your Docker host server
-- Unpack with 
+
+- Unpack the docker container tar with
       
       7z x <zip name> 
-
-- load the docker image from the resulting tar file
+  
+- load the docker image from the tar file
 
       docker load -i trinitycore.tar
    
    You can delete the zip and tar now.
       
- - create a folder to host your TrinityCore solution in - this will contain your conf files, SQL data etc.
+ - create a folder to host your TrinityCore solution in - this will contain your conf files, SQL data, everything your server needs will be in this one location.
+ 
  - Get the world and auth server config files at these paths
  
     https://github.com/TrinityCore/TrinityCore/blob/<TAG HERE!>/src/server/worldserver/worldserver.conf.dist
     https://github.com/TrinityCore/TrinityCore/blob/<TAG HERE!>/src/server/authserver/authserver.conf.dist
     
-  replace <TAG HERE!> with the tag of your build. Save these files to your solution folder as worldserver.conf and authserver.conf
+  replace <TAG HERE!> with your container tag (aka version). Save these files to your solution folder as worldserver.conf and authserver.conf
   
-  - Edit worldserver.conf and authserver.conf as per your requirements. It is beyond the scope of this document to explain the details of configuring TrinityCore, but there are some details which are pertinent for running TrinityCore in docker
+  - Edit worldserver.conf and authserver.conf as per your requirements - you use them to control server setup and behaviour. Check the official TrinityCore docs for info on configuring your server, but to get a basic setup running, and particularly with docker in mine, you should set the following 
   
       In worldserver.conf set
       
@@ -35,7 +37,7 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
             WorldDatabaseInfo     = "db;3306;root;root;world"
             CharacterDatabaseInfo = "db;3306;root;root;characters"
         
-        "db" in this case is the MySQL container id, "root" and "root" are the Mysql username and password, all three are defined in docker-compose.yml
+        "db" is the MySQL container id, "root" and "root" are the Mysql username and password, all three are set in docker-compose.yml
 
       - change the source directory to
       
@@ -51,7 +53,7 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
           
       In authserver.conf set   
       
-      - connection strings 
+      - connection string 
       
             LoginDatabaseInfo = "db;3306;root;root;auth"
       
@@ -63,18 +65,21 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
 
       docker-compose up -d
   
-  At the this point the world and auth server contains will start, but they will not yet start Trinitycore, as those commands are still commented out.
+  At this point the world and auth server containers will start, but they will not yet start TrinityCore, as their respective start commands are still commented out.
       
-- Run the following scripts to initialize your database      
+- Run the following commands to initialize your database      
 
       docker exec -it trinity-world bash -c "cp /opt/trinitycore/sql/create/create_mysql.sql /var/trinityscripts"
       docker exec -it trinity-db bash -c "mysql -u root -proot  < /var/trinityscripts/create_mysql.sql"
       
-  This creates empty databases needed by Trinitycore.    
+  This creates the databases needed by Trinitycore.    
     
-- Shell into your world server and start trinity manually
+- Shell into your world server container 
 
       docker exec -it trinity-world bash
+   
+   Now start the worldserver manually
+   
       cd /opt/trinitycore/bin
       ./worldserver
       
@@ -83,18 +88,18 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
       .account create YOURGMNAME YOURPASSWORD
       .account set gmlevel YOURGMNAME 3
     
-    While you're here you can create other user accounts or do general Trinity house keeping. Exit worldserver and container with 
+    You need a GM account to telnet into the server. While you're here you can create other user accounts or do general Trinity house keeping. Exit worldserver and container with 
     
       CTRL+C
       exit
       
-- Edit worldserver.conf again and disable console
+- Edit worldserver.conf again and disable console as you no longer need it
 
       Console.Enable = 0
       
-   We do this so TrinityCore will run in "daemon" mode,  if we don't the console prompt waiting for user input will flood your docker logs
+   We do this so TrinityCore will run in "daemon" mode and stop flooding your logs with console input prompts.
 
-- Add your realm IP : TrinityCore requires that your server's IP is added to the realmlist table. Figure out what your Docker host machine IP is then run this
+- Add your realm IP to the auth database. Figure out your Docker host machine IP and then run
 
       docker exec -it trinity-db bash -c "mysql -u root -proot -D auth -e \"UPDATE realmlist SET address='YOUR-IP-HERE' \" "  
       
@@ -102,4 +107,4 @@ In this example the tag is `TDB335.20081`. Tags are like version numbers. Note t
       
       docker-compose up -d --force-recreate
 
-- Your TrinityCore server is ready to use. For further admin, telnet in to @ your Docker host IP and port 3443, use your GM credentials.
+- Your TrinityCore server is ready to use.  For further admin telnet in to @ your Docker host IP and port 3443, use your GM credentials. Your GM credentials also allow you to log in with your WoW client.
