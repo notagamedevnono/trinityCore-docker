@@ -10,7 +10,7 @@ This project contains a build script to help you easily build [TrinityCore](http
 
 ### Requirements
 
-- An _Ubuntu 20.04 LTS_ system, at least 50 gigs of free drive space, and as much memory and CPU as you can throw at it. VMs works fine. No other distro/version is supported because the build OS must match the Docker container OS. Ubuntu server edition works out-of-the box, deskop will require `git`, `wget` and `curl`.
+- An _Ubuntu 20.04 LTS_ system, at least 100 gigs of free drive space, and as much memory and CPU as you can throw at it. VMs works fine. No other distro/version is supported because the build OS must match the Docker container OS. Ubuntu server edition works out-of-the box, deskop will require `git`, `wget` and `curl`.
 - Docker 19.x or higher with access to membership in the `docker` group. 
 - A totally legitimate and obviously legally-procurred WoW 3.3.5 client.
 
