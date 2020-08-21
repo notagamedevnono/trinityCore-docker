@@ -1,46 +1,46 @@
 # trinityCore-docker
 
-- A full build system for TrinityCore 3.3.5
-- Requires minimal setup, does _everything_ for you.
-- Produces local binaries and a fully-featured docker container that can be easily transferred to other systems and mounted there.
-- Can be run continuously to create new containers based on the latest tag in the 3.3.5 branch.
-- Includes a handy SQL backup script that will back your Mysql container data up.
-- Includes instructions to mount a new server, or restore a server from SQL backups.
+This project contains a build script to help you build [TrinityCore](https://www.trinitycore.org/) server in a Docker container. It also contains scripts/tips for running and maintaining your server, including database backup and restore.
+
+- The build script will build a self-contained TrinityCore 3.3.5 server container- all sql scripts and WoW client data extraction is done for you. 
+- Once build, your container can be used to quickly create a Trinitycore server on any Linux machine - create new servers, multiple servers, transfers servers to other machines, etc
+- The build script can be run continuously to create new container versions as they are released
 
 ## Build 
 
-### Requires
+### Requirements
 
-- An Ubuntu 20.04 LTS system, at least 150 gigs of free drive space, and as much memory and CPU as you can throw at it. VirtualBox works fine.
-- Docker 19.x or better preinstalled
-- Your legally-purchased WoW 3.3.5 client in your hoome folder @ ~/wowClient
+- An _Ubuntu 20.04 LTS_ system, at least 50 gigs of free drive space, and as much memory and CPU as you can throw at it. VirtualBox works fine. No other distro/version is supported.
+- Docker 19.x or higher. 
+- A totally legitimate and obviously legally-procured WoW 3.3.5 client
 
 ### How to
 
-- clone this repo to your home folder
-- cd ./trinityCore-docker
+- place your WoW client @ `~/wowClient`. Leave it here forever, each build your run will clean and read it.
+- clone this repo to your home folder @ `~/trinityCore-docker` then
+
+      cd ./trinityCore-docker
+      
 - Make the setup script executable
 
       chmod +x build.sh
   
-  Warning : this script is going to change your system by installing all of Trinity's build prerequisites
+  _WARNING_ : this script is going to change your system by installing all of Trinity's build prerequisites etc
       
-- Run build
+- Run the build
 
       sudo ./build.sh
   
-- Your build binaries will be placed in /opt/trinitycore
-- Your docker container will be placed in a zip file in ~/trinityContainers
+- Done - no more is needed. Your container will be be zipped and place in `~/trinityContainers`.
 
 ## Running Trinitycore in docker
 
 ### Requires
 
-- Litereally any Linux system that can run Docker 19.x or better
+- Any Linux system that can run Docker 19.x or better
 - 7zip installed
-- 1 CPU core
-- At least 2 gigs of RAM
-- About 30 gigs of drive space to be safe
+- At least 1 CPU core and 2 GBs of RAM. This container can be mounted on Linode's 2nd smallest VM type.
+- About 30 gigs of drive space, give or take. 
 
 ### Starting from scratch 
 
@@ -52,12 +52,12 @@ If you have existing TrinityCore database backups, see the [restore](restore_fro
 
 ### Backing up TrinityCore
 
-Backing up TrinityCore running in Docker is pretty straight forward. 
+Backing up TrinityCore in Docker is pretty straight forward. 
 
 - Uploaded the included `backup.sh` script to your TrinityCore solution folder
--  Run it
+- Run it
 
       sh ./backup.sh
       
-   Backups will be written to the /dbdumps folder - three files are created : `auth.sql`, `characters.sql` and `world.sql`. You probably want to modify this backup script to do something more advanced, f.ex, you can zip all three files up together and transfer them to a storage server for safe-keeping.
+   Backups will be written to the /dbdumps folder - three files are created : `auth.sql`, `characters.sql` and `world.sql`. You probably want to modify this backup script to do something more advanced, f.ex, zip all three files up together, name by date and upload the archive to S3 for storage.
    
