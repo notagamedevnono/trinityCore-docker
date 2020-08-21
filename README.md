@@ -31,7 +31,7 @@ This project contains a build script to help you easily build [TrinityCore](http
 
       sudo ./build.sh
   
-- A whole while latter - your container will be place in `~/trinityContainers` as a 7zip archive. 
+- A whole while later, your container will be place in `~/trinityContainers` as a 7zip archive. 
 
 ## Create a server
 
