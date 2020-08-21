@@ -10,9 +10,9 @@ This project contains a build script to help you easily build [TrinityCore](http
 
 ### Requirements
 
-- An _Ubuntu 20.04 LTS_ system, at least 50 gigs of free drive space, and as much memory and CPU as you can throw at it. VirtualBox works fine. No other distro/version is supported.
+- An _Ubuntu 20.04 LTS_ system, at least 50 gigs of free drive space, and as much memory and CPU as you can throw at it. VirtualBox works fine. No other distro/version is supported, sorry - the Docker container and build server versions have to match.
 - Docker 19.x or higher. 
-- A totally legitimate and obviously legally-procured WoW 3.3.5 client
+- A totally legitimate and obviously legally-procurred WoW 3.3.5 client.
 
 ### How to
 
@@ -31,7 +31,7 @@ This project contains a build script to help you easily build [TrinityCore](http
 
       sudo ./build.sh
   
-- Done - no more is needed. Your container will be be zipped and place in `~/trinityContainers`.
+- A whole while latter - your container will be place in `~/trinityContainers` as a 7zip archive. 
 
 ## Create a server
 
