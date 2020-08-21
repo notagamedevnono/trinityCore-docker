@@ -1,6 +1,6 @@
 ### Starting a server from scratch
 
-See the [readme.md](-/README.md) for Docker host requirements. Your build script will create a TrinityCore container zipped down to a file with a name like 
+Your build script will have created a TrinityCore container zipped down to a file with a name like 
 
       trinitycore-docker.TDB335.20081.2020-08-20.7z 
 
