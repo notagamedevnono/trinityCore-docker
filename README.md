@@ -10,9 +10,9 @@ This project contains a build script to help you easily build [TrinityCore](http
 
 ### Requirements
 
-- An _Ubuntu 20.04 LTS_ system, at least 100 gigs of free drive space, and as much memory and CPU as you can throw at it. VMs works fine. No other distro/version is supported because the build OS must match the Docker container OS. Ubuntu server edition works out-of-the box, deskop will require `git`, `wget` and `curl`.
-- Docker 19.x or higher with access to membership in the `docker` group. 
-- A totally legitimate and obviously legally-procurred WoW 3.3.5 client.
+- An _Ubuntu 20.04 LTS_ system, at least 100 gigs of free drive space, and as much memory and CPU as you can throw at it. VMs works fine. No other distro/version is supported because the build OS must match the Docker container OS. Ubuntu Server Edition works out-of-the box, Deskop Edition will require `git`, `wget` and `curl`.
+- `docker` installed.
+- A totally legitimate, non-dubiously-procurred WoW 3.3.5 client.
 
 ### How to
 
@@ -32,13 +32,13 @@ This project contains a build script to help you easily build [TrinityCore](http
 
       sudo ./build.sh
   
-- A whole while later, your container will be place in `~/trinityContainers` as a 7zip archive. 
+- A whole while later, your container will be placed in `~/trinityContainers` as a 7zip archive. Build done.
 
 ## Create a server
 
 ### Requirements
 
-- Any Linux system with Docker 19.x or better
+- Any Linux system with Docker 19.x or better. TrinityCore won't work with a linked MySQL container on older versions.
 - At least 1 CPU core, 2 GBs of RAM and 30 gigs of drive space. This container can be mounted on Linode's 2nd smallest VM type.
 - 7zip installed
 
