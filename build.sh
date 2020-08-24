@@ -40,6 +40,26 @@ BUILD_TAG=
 
 
 ##############################################################################################################
+# try to test as much as possible before running script so we can catch missing/broken things
+
+# ensure that docker is available
+echo "doing docker version check ..."
+docker --version
+
+echo "doing git version check ..."
+git --version
+
+echo "testing 7z ..."
+7z
+
+echo "testing wget"
+wget --help
+
+echo "testing curl"
+curl --version
+
+
+##############################################################################################################
 # clean out build target folder entirely. we're building into /opt/trinitycore so chown it. We build to 
 # /opt/trinitycore because trinitycore's make hardcodes its path internally. We want our docker bins to live in 
 # /opt/trinitycore, so we need to build there
