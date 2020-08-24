@@ -31,20 +31,19 @@ BUILD_FOLDER=/opt/trinitycore
 # container repo, so we're transferring images as bin files
 CONTAINER_FOLDER=$(readlink -f ../trinityContainers)
 
-# number of threads to use for build. You want to build at full tilt, it speeds the build up tremendously
+# overbook threads to use for build. You want to build at full tilt, it speeds the build up tremendously
 BUILD_THREAD_COUNT=18
 
 # if you want to force this script to build a specific tag, set it here. Use tags only, don't built arbitrary 
 # hashes, this script hasn't been tested to work with hashes
 BUILD_TAG=
 
-# by default script will build and extract everything - to do that it will also clean up everything it has previously
-# built. For testing purposes it can help to disable clean up,compile+extract. this is for testing/dev only, use it
-# only if you know what you're doing.
+# if you want to rebuild and skip compilation and client extraction, use "--partial" switch. This is for 
+# dev/testing, so don't use this unless you know what you're doing
 FULL_BUILD=1
 while [ -n "$1" ]; do 
     case "$1" in
-    -f|--fast) FULL_BUILD=0 ;;
+    -p|--partial) FULL_BUILD=0 ;;
     esac 
     shift
 done
@@ -127,7 +126,6 @@ apt-get upgrade -y
 apt-get install -y git clang cmake make gcc g++ libmariadbclient-dev libssl-dev libbz2-dev libreadline-dev libncurses-dev libboost-all-dev=1.71.0.0ubuntu2 mariadb-server p7zip p7zip-full libmariadb-client-lgpl-dev-compat
 update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100
 update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
-
 
 # configure and build
 cd $SRC_FOLDER
