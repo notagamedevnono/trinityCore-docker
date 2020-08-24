@@ -31,19 +31,55 @@ BUILD_FOLDER=/opt/trinitycore
 # container repo, so we're transferring images as bin files
 CONTAINER_FOLDER=$(readlink -f ../trinityContainers)
 
-# number of threads to use for build. You want to build at full tilt, it speeds the build up tremendously
+# overbook threads to use for build. You want to build at full tilt, it speeds the build up tremendously
 BUILD_THREAD_COUNT=18
 
 # if you want to force this script to build a specific tag, set it here. Use tags only, don't built arbitrary 
 # hashes, this script hasn't been tested to work with hashes
 BUILD_TAG=
 
+# if you want to rebuild and skip compilation and client extraction, use "--partial" switch. This is for 
+# dev/testing, so don't use this unless you know what you're doing
+FULL_BUILD=1
+while [ -n "$1" ]; do 
+    case "$1" in
+    -p|--partial) FULL_BUILD=0 ;;
+    esac 
+    shift
+done
+
+# ensure script was run as sudo
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+
+##############################################################################################################
+# try to test as much as possible before running script so we can catch missing/broken things
+
+# ensure that docker is available
+echo "doing docker version check ..."
+docker --version
+
+echo "doing git version check ..."
+git --version
+
+echo "testing wget"
+wget --help
+
+echo "testing curl"
+curl --version
+
 
 ##############################################################################################################
 # clean out build target folder entirely. we're building into /opt/trinitycore so chown it. We build to 
 # /opt/trinitycore because trinitycore's make hardcodes its path internally. We want our docker bins to live in 
 # /opt/trinitycore, so we need to build there
-rm -rf $BUILD_FOLDER
+if [ $FULL_BUILD -eq 1 ]; then
+    rm -rf $BUILD_FOLDER
+fi
+    
 mkdir -p $BUILD_FOLDER
 chown $USER -R $BUILD_FOLDER
 
@@ -91,46 +127,65 @@ apt-get install -y git clang cmake make gcc g++ libmariadbclient-dev libssl-dev 
 update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100
 update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
 
-
 # configure and build
 cd $SRC_FOLDER
-rm -rf build
+if [ $FULL_BUILD -eq 1 ]; then
+    rm -rf build
+fi
+
 mkdir -p build
 cd build
-cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
-make -j $BUILD_THREAD_COUNT
-make install
 
+if [ $FULL_BUILD -eq 1 ]; then
+    cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
+    make -j $BUILD_THREAD_COUNT
+    make install
+fi
 
 # clean out any trinity extract stuff from wowClient folder, if we don't do this trinity extract will complain 
 # about contamination
 cd $CLIENT_FOLDER
-rm -rf Buildings
-rm -rf Cameras
-rm -rf dbc
-rm -rf maps
-rm -rf mmaps
-rm -rf vmaps
-
+if [ $FULL_BUILD -eq 1 ]; then
+    rm -rf Buildings
+    rm -rf Cameras
+    rm -rf dbc
+    rm -rf maps
+    rm -rf mmaps
+    rm -rf vmaps
+fi
 
 # extract data from WoW client, this is where the real time penalty hits
-${BUILD_FOLDER}/bin/mapextractor
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/mapextractor
+fi
+    
 mkdir -p ${BUILD_FOLDER}/data
 cp -r dbc maps ${BUILD_FOLDER}/data
 
-${BUILD_FOLDER}/bin/vmap4extractor
+
+
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/vmap4extractor
+fi    
+
 mkdir -p vmaps
-${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
+
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
+fi
+    
 cp -r vmaps ${BUILD_FOLDER}/data
 
 mkdir -p mmaps
-${BUILD_FOLDER}/bin/mmaps_generator
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/mmaps_generator
+fi    
 cp -r mmaps ${BUILD_FOLDER}/data
 
 
 # get stock conf files and put them where bins expect them to be
-mv ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.conf
-mv ${BUILD_FOLDER}/etc/authserver.conf.dist ${BUILD_FOLDER}/etc/authserver.conf
+cp ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.conf
+cp ${BUILD_FOLDER}/etc/authserver.conf.dist ${BUILD_FOLDER}/etc/authserver.conf
 
 
 # get sql files and put them in /sql folder
@@ -153,8 +208,15 @@ docker build -f ${CWD}/DockerFile -t trinitycore .
 mkdir -p $CONTAINER_FOLDER
 docker tag trinitycore:latest trinitycore:$BUILD_TAG
 docker save trinitycore:$BUILD_TAG > ${CONTAINER_FOLDER}/trinitycore.tar
-7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar
-rm ${CONTAINER_FOLDER}/trinitycore.tar
+
+# stage conf files to container folder, then zip everything up
+cp ${BUILD_FOLDER}/etc/worldserver.conf ${CONTAINER_FOLDER}/worldserver.conf
+cp ${BUILD_FOLDER}/etc/authserver.conf ${CONTAINER_FOLDER}/authserver.conf
+7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/authserver.conf
+
+# clean up container folder, it should contain only 7z files
+rm ${CONTAINER_FOLDER}/*.tar
+rm ${CONTAINER_FOLDER}/*.conf
 
 # phew, we're done
 DURATION=$SECONDS
