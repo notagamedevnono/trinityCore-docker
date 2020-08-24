@@ -49,9 +49,6 @@ docker --version
 echo "doing git version check ..."
 git --version
 
-echo "testing 7z ..."
-7z
-
 echo "testing wget"
 wget --help
 
@@ -149,8 +146,8 @@ cp -r mmaps ${BUILD_FOLDER}/data
 
 
 # get stock conf files and put them where bins expect them to be
-mv ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.conf
-mv ${BUILD_FOLDER}/etc/authserver.conf.dist ${BUILD_FOLDER}/etc/authserver.conf
+cp ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.conf
+cp ${BUILD_FOLDER}/etc/authserver.conf.dist ${BUILD_FOLDER}/etc/authserver.conf
 
 
 # get sql files and put them in /sql folder
@@ -173,8 +170,15 @@ docker build -f ${CWD}/DockerFile -t trinitycore .
 mkdir -p $CONTAINER_FOLDER
 docker tag trinitycore:latest trinitycore:$BUILD_TAG
 docker save trinitycore:$BUILD_TAG > ${CONTAINER_FOLDER}/trinitycore.tar
-7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar
-rm ${CONTAINER_FOLDER}/trinitycore.tar
+
+# stage conf files to container folder, then zip everything up
+cp ${BUILD_FOLDER}/etc/worldserver.conf ${CONTAINER_FOLDER}/worldserver.conf
+cp ${BUILD_FOLDER}/etc/authserver.conf ${CONTAINER_FOLDER}/authserver.conf
+7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/authserver.conf
+
+# clean up container folder, it should contain only 7z files
+rm ${CONTAINER_FOLDER}/*.tar
+rm ${CONTAINER_FOLDER}/*.conf
 
 # phew, we're done
 DURATION=$SECONDS
