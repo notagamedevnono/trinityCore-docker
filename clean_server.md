@@ -2,7 +2,7 @@
 
 This guide assumes you know the basics of Docker and Docker-compose, and are familiar with the Linux command line.
 
-- You've already run the build script in [README.md](readme). This would have produced a 7z archive with your container. Upload said archive to the machine that will act as your TrinityCore host.
+- You've already run the build script in [./README.md](readme). This would have produced a 7z archive with your container. Upload said archive to the machine that will act as your TrinityCore host.
 
  - Create a folder to host your TrinityCore solution in - this will contain your conf files, SQL data, everything your server needs, in one location. A typical folder would be at `/opt/trinitycore`
  
