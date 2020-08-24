@@ -38,6 +38,23 @@ BUILD_THREAD_COUNT=18
 # hashes, this script hasn't been tested to work with hashes
 BUILD_TAG=
 
+# by default script will build and extract everything - to do that it will also clean up everything it has previously
+# built. For testing purposes it can help to disable clean up,compile+extract. this is for testing/dev only, use it
+# only if you know what you're doing.
+FULL_BUILD=1
+while [ -n "$1" ]; do 
+    case "$1" in
+    -f|--fast) FULL_BUILD=0 ;;
+    esac 
+    shift
+done
+
+# ensure script was run as sudo
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
 
 ##############################################################################################################
 # try to test as much as possible before running script so we can catch missing/broken things
@@ -60,7 +77,10 @@ curl --version
 # clean out build target folder entirely. we're building into /opt/trinitycore so chown it. We build to 
 # /opt/trinitycore because trinitycore's make hardcodes its path internally. We want our docker bins to live in 
 # /opt/trinitycore, so we need to build there
-rm -rf $BUILD_FOLDER
+if [ $FULL_BUILD -eq 1 ]; then
+    rm -rf $BUILD_FOLDER
+fi
+    
 mkdir -p $BUILD_FOLDER
 chown $USER -R $BUILD_FOLDER
 
@@ -111,37 +131,57 @@ update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
 
 # configure and build
 cd $SRC_FOLDER
-rm -rf build
+if [ $FULL_BUILD -eq 1 ]; then
+    rm -rf build
+fi
+
 mkdir -p build
 cd build
-cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
-make -j $BUILD_THREAD_COUNT
-make install
 
+if [ $FULL_BUILD -eq 1 ]; then
+    cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
+    make -j $BUILD_THREAD_COUNT
+    make install
+fi
 
 # clean out any trinity extract stuff from wowClient folder, if we don't do this trinity extract will complain 
 # about contamination
 cd $CLIENT_FOLDER
-rm -rf Buildings
-rm -rf Cameras
-rm -rf dbc
-rm -rf maps
-rm -rf mmaps
-rm -rf vmaps
-
+if [ $FULL_BUILD -eq 1 ]; then
+    rm -rf Buildings
+    rm -rf Cameras
+    rm -rf dbc
+    rm -rf maps
+    rm -rf mmaps
+    rm -rf vmaps
+fi
 
 # extract data from WoW client, this is where the real time penalty hits
-${BUILD_FOLDER}/bin/mapextractor
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/mapextractor
+fi
+    
 mkdir -p ${BUILD_FOLDER}/data
 cp -r dbc maps ${BUILD_FOLDER}/data
 
-${BUILD_FOLDER}/bin/vmap4extractor
+
+
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/vmap4extractor
+fi    
+
 mkdir -p vmaps
-${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
+
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
+fi
+    
 cp -r vmaps ${BUILD_FOLDER}/data
 
 mkdir -p mmaps
-${BUILD_FOLDER}/bin/mmaps_generator
+if [ $FULL_BUILD -eq 1 ]; then
+    ${BUILD_FOLDER}/bin/mmaps_generator
+fi    
 cp -r mmaps ${BUILD_FOLDER}/data
 
 
