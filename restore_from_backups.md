@@ -1,6 +1,18 @@
 # Restoring TrinityCore from backups
 
-- Put your TrinityCore docker-compose solution in "idle" mode by commenting out the world and auth server `command` lines in `docker-compose.yml` and restarting with
+- If you're starting a new server from scratch but have a data to restore
+ 
+      7z x <your archive name>.7z
+      cd <your archive name>
+      docker load -i trinitycore.tar
+      
+      docker-compose up -d
+      
+      docker exec -it trinity-world bash -c "cp /opt/trinitycore/sql/create/create_mysql.sql /var/trinityscripts"
+      docker exec -it trinity-db bash -c "mysql -u root -proot  < /var/trinityscripts/create_mysql.sql"      
+  
+      
+- else if you have existing data and want to completely overrwrite, Put your TrinityCore docker-compose solution in "idle" mode by commenting out the world and auth server `command` lines in `docker-compose.yml` and restarting with
 
       docker-compose up -d --force-recreate
   
