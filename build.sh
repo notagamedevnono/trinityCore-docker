@@ -14,13 +14,21 @@
 set -e
 
 # repo/branch to fetch server source from. Must be trinitycore or fork thereof. 
-# To build Lich King use repo https://github.com/TrinityCore/TrinityCore, branch 3.3.5
-# To build Cataclym use repo https://github.com/The-Cataclysm-Preservation-Project, branch master
+# To build Lich King use 
+#     REPO https://github.com/TrinityCore/TrinityCore
+#     BRANCH "3.3.5"
+#     AUTH_SERVER authserver
+#     FORK TC
+# To build Cataclym use 
+#     REPO https://github.com/The-Cataclysm-Preservation-Project
+#     BRANCH master
+#     AUTH_SERVER bnetserver
+#     FORK CPP
 REPO=https://github.com/The-Cataclysm-Preservation-Project
 BRANCH=master
-
-# this should be set to "authserver" for Lich King, and "bnetserver" for anything after
 AUTH_SERVER=authserver
+FORK=TC
+
 
 # used to time build 
 SECONDS=0
@@ -59,6 +67,7 @@ done
 
 # these should always be 1, unless you're debugging this script and want to easily bypass time-consuming 
 # stages that you know have already passed
+INSTALL_PREREQUISITES=1
 BUILD_BINARIES=1
 CLEAN_CONTENT=1
 EXTRACT_MAPS=1
@@ -138,17 +147,22 @@ git checkout $BUILD_TAG
 TAG_DATE=$(git log -1 --format=%ai $BUILD_TAG)
 TAG_DATE=${TAG_DATE:0:10}
 TAG_DATE=${TAG_DATE//-/_}
-FULL_DATABASE_FRAGMENT="${BUILD_TAG}/TDB_full_world_${BUILD_TAG/TDB/}_${TAG_DATE}"
 
 
 # install build prerequisites. This is an unholy mess that's going to constantly shift as Ubuntu 20.04 gets 
 # maintainance patches, but we'll hopefully stay sync with our Ubuntu 20.04 docker image by buiding at the 
 # same time as updating the host. Fingers crossed.
-apt-get update
-apt-get upgrade -y
-apt-get install -y git clang cmake make gcc g++ libmariadbclient-dev libssl-dev libbz2-dev libreadline-dev libncurses-dev libboost-all-dev=1.71.0.0ubuntu2 mariadb-server p7zip p7zip-full libmariadb-client-lgpl-dev-compat
-update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100
-update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
+if [ $INSTALL_PREREQUISITES -eq 1 ]; then
+    apt-get update
+    apt-get upgrade -y
+    apt-get install -y git clang cmake make gcc g++ libmariadbclient-dev libssl-dev libbz2-dev libreadline-dev libncurses-dev libboost-all-dev=1.71.0.0ubuntu2 mariadb-server p7zip p7zip-full libmariadb-client-lgpl-dev-compat
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
+    
+    # force stop and remove the mysql daemon, you don't need this running and it will block you from testing mounting your mysql container locally
+    service mysql stop
+    systemctl disable mysql
+fi
 
 # configure and build
 cd $SRC_FOLDER
@@ -180,30 +194,32 @@ fi
 # extract data from WoW client, this is where the real time penalty hits
 if [ $EXTRACT_MAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/mapextractor
+    
+    mkdir -p ${BUILD_FOLDER}/data
+    echo "Copying maps"
+    cp -r dbc maps ${BUILD_FOLDER}/data
 fi
     
-mkdir -p ${BUILD_FOLDER}/data
-cp -r dbc maps ${BUILD_FOLDER}/data
-
-
 
 if [ $EXTRACT_VMAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/vmap4extractor
+    mkdir -p vmaps
 fi    
 
-mkdir -p vmaps
 
 if [ $ASSEMBLE_VMAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
+    echo "Copying vmaps"    
+    cp -r vmaps ${BUILD_FOLDER}/data
 fi
     
-cp -r vmaps ${BUILD_FOLDER}/data
 
-mkdir -p mmaps
 if [ $GENERATE_MMAPS -eq 1 ]; then
+    mkdir -p mmaps
     ${BUILD_FOLDER}/bin/mmaps_generator
+    echo "Copying mmaps"
+    cp -r mmaps ${BUILD_FOLDER}/data
 fi    
-cp -r mmaps ${BUILD_FOLDER}/data
 
 
 # get stock conf files and put them where bins expect them to be
@@ -211,11 +227,20 @@ cp ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.con
 cp ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf.dist ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf
 
 # get sql files and put them in /sql folder
+echo "Copying sql files"
 mkdir -p ${BUILD_FOLDER}/sql
 cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}
 
+
 # download that honking big full database file and unpack it to /bin
-wget ${REPO}/releases/download/${FULL_DATABASE_FRAGMENT}.7z -O ${BUILD_FOLDER}/bin/fulldb.7z
+if [ $FORK = "TC" ]; then
+    DB_URL="${REPO}/releases/download/${BUILD_TAG}/TDB_full_world_${BUILD_TAG/TDB/}_${TAG_DATE}.7z"
+elif [ $FORK = "CPP" ]; then
+    DB_URL="${REPO}/TrinityCore/releases/download/${BUILD_TAG}/TDB_full_${BUILD_TAG/TDB/}_${TAG_DATE}.7z"
+fi
+
+
+wget $DB_URL -O ${BUILD_FOLDER}/bin/fulldb.7z
 # -aoa = overwrite everything with prompt
 7z x ${BUILD_FOLDER}/bin/fulldb.7z -o${BUILD_FOLDER}/bin -aoa
 rm ${BUILD_FOLDER}/bin/fulldb.7z
