@@ -19,6 +19,9 @@ set -e
 REPO=https://github.com/The-Cataclysm-Preservation-Project
 BRANCH=master
 
+# this should be set to "authserver" for Lich King, and "bnetserver" for anything after
+AUTH_SERVER=authserver
+
 # used to time build 
 SECONDS=0
 
@@ -205,8 +208,7 @@ cp -r mmaps ${BUILD_FOLDER}/data
 
 # get stock conf files and put them where bins expect them to be
 cp ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.conf
-cp ${BUILD_FOLDER}/etc/authserver.conf.dist ${BUILD_FOLDER}/etc/authserver.conf
-
+cp ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf.dist ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf
 
 # get sql files and put them in /sql folder
 mkdir -p ${BUILD_FOLDER}/sql
@@ -235,8 +237,8 @@ fi
 # stage conf files to container folder, then zip everything up
 if [ $ARCHIVE_CONTAINER -eq 1 ]; then
     cp ${BUILD_FOLDER}/etc/worldserver.conf ${CONTAINER_FOLDER}/worldserver.conf
-    cp ${BUILD_FOLDER}/etc/authserver.conf ${CONTAINER_FOLDER}/authserver.conf
-    7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/authserver.conf
+    cp ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf ${CONTAINER_FOLDER}/${AUTH_SERVER}.conf
+    7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/${AUTH_SERVER}.conf
     
     # clean up container folder, it should contain only 7z files
     rm ${CONTAINER_FOLDER}/*.tar
