@@ -13,6 +13,12 @@
 # force exit if anything fails
 set -e
 
+# repo/branch to fetch server source from. Must be trinitycore or fork thereof. 
+# To build Lich King use repo https://github.com/TrinityCore/TrinityCore, branch 3.3.5
+# To build Cataclym use repo https://github.com/The-Cataclysm-Preservation-Project, branch master
+REPO=https://github.com/The-Cataclysm-Preservation-Project
+BRANCH=master
+
 # used to time build 
 SECONDS=0
 
@@ -48,6 +54,17 @@ while [ -n "$1" ]; do
     shift
 done
 
+# these should always be 1, unless you're debugging this script and want to easily bypass time-consuming 
+# stages that you know have already passed
+BUILD_BINARIES=1
+CLEAN_CONTENT=1
+EXTRACT_MAPS=1
+EXTRACT_VMAPS=1
+ASSEMBLE_VMAPS=1
+GENERATE_MMAPS=1
+BUILD_CONTAINER=1
+ARCHIVE_CONTAINER=1
+
 # ensure script was run as sudo
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -76,7 +93,7 @@ curl --version
 # clean out build target folder entirely. we're building into /opt/trinitycore so chown it. We build to 
 # /opt/trinitycore because trinitycore's make hardcodes its path internally. We want our docker bins to live in 
 # /opt/trinitycore, so we need to build there
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $BUILD_BINARIES -eq 1 ]; then
     rm -rf $BUILD_FOLDER
 fi
     
@@ -88,23 +105,26 @@ CWD=$(pwd)
 
 # clone or pull trinity src
 if [ ! -d $SRC_FOLDER ]; then
-    git clone -b 3.3.5 git://github.com/TrinityCore/TrinityCore.git $SRC_FOLDER 
-else
-    cd $SRC_FOLDER
-    git checkout 3.3.5
-    git reset --hard
-    git clean -f
-    git pull
-    cd -- 
+    git clone $REPO $SRC_FOLDER 
+    cd --
 fi
 
+# make sure we have latest changes on target branch (if we're re-building existing checkout)
 cd $SRC_FOLDER
+git reset --hard
+git clean -f
+git checkout $BRANCH # do this to re-attach to branch 
+git pull
+cd -- 
+
 
 # figure out the latest tag in trinity src. We build tags and tags only, because that's how civilized people 
-# distribute stuff
+# distribute software
+cd $SRC_FOLDER
 if [ -z "$BUILD_TAG" ]; then
     BUILD_TAG=$(git describe --tags --abbrev=0) 
 fi
+
 
 # Now that we have the tag, check it out
 git checkout $BUILD_TAG
@@ -129,14 +149,14 @@ update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
 
 # configure and build
 cd $SRC_FOLDER
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $BUILD_BINARIES -eq 1 ]; then
     rm -rf build
 fi
 
 mkdir -p build
 cd build
 
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $BUILD_BINARIES -eq 1 ]; then
     cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
     make -j $BUILD_THREAD_COUNT
     make install
@@ -145,7 +165,7 @@ fi
 # clean out any trinity extract stuff from wowClient folder, if we don't do this trinity extract will complain 
 # about contamination
 cd $CLIENT_FOLDER
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $CLEAN_CONTENT -eq 1 ]; then
     rm -rf Buildings
     rm -rf Cameras
     rm -rf dbc
@@ -155,7 +175,7 @@ if [ $FULL_BUILD -eq 1 ]; then
 fi
 
 # extract data from WoW client, this is where the real time penalty hits
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $EXTRACT_MAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/mapextractor
 fi
     
@@ -164,20 +184,20 @@ cp -r dbc maps ${BUILD_FOLDER}/data
 
 
 
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $EXTRACT_VMAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/vmap4extractor
 fi    
 
 mkdir -p vmaps
 
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $ASSEMBLE_VMAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/vmap4assembler Buildings vmaps
 fi
     
 cp -r vmaps ${BUILD_FOLDER}/data
 
 mkdir -p mmaps
-if [ $FULL_BUILD -eq 1 ]; then
+if [ $GENERATE_MMAPS -eq 1 ]; then
     ${BUILD_FOLDER}/bin/mmaps_generator
 fi    
 cp -r mmaps ${BUILD_FOLDER}/data
@@ -193,30 +213,36 @@ mkdir -p ${BUILD_FOLDER}/sql
 cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}
 
 # download that honking big full database file and unpack it to /bin
-wget https://github.com/TrinityCore/TrinityCore/releases/download/${FULL_DATABASE_FRAGMENT}.7z -O ${BUILD_FOLDER}/bin/fulldb.7z
+wget ${REPO}/releases/download/${FULL_DATABASE_FRAGMENT}.7z -O ${BUILD_FOLDER}/bin/fulldb.7z
 # -aoa = overwrite everything with prompt
 7z x ${BUILD_FOLDER}/bin/fulldb.7z -o${BUILD_FOLDER}/bin -aoa
 rm ${BUILD_FOLDER}/bin/fulldb.7z
 
 # build docker image using the Dockerfile in this repo. 
-cd ${BUILD_FOLDER}
-docker build -f ${CWD}/DockerFile -t trinitycore .
+if [ $BUILD_CONTAINER -eq 1 ]; then
+    cd ${BUILD_FOLDER}
+    docker build -f ${CWD}/DockerFile -t trinitycore .
 
-# Use docker save to pack our container to a tar file, then zip that because it's giant AF and we will almost 
-# certainly want to transfer it to another server to host. Note that the container has already been tagged to 
-# match the TrinityCore tag we built from.
-mkdir -p $CONTAINER_FOLDER
-docker tag trinitycore:latest trinitycore:$BUILD_TAG
-docker save trinitycore:$BUILD_TAG > ${CONTAINER_FOLDER}/trinitycore.tar
+    # Use docker save to pack our container to a tar file, then zip that because it's giant AF and we will almost 
+    # certainly want to transfer it to another server to host. Note that the container has already been tagged to 
+    # match the TrinityCore tag we built from.
+    mkdir -p $CONTAINER_FOLDER
+    docker tag trinitycore:latest trinitycore:$BUILD_TAG
+    docker save trinitycore:$BUILD_TAG > ${CONTAINER_FOLDER}/trinitycore.tar
+fi
+
 
 # stage conf files to container folder, then zip everything up
-cp ${BUILD_FOLDER}/etc/worldserver.conf ${CONTAINER_FOLDER}/worldserver.conf
-cp ${BUILD_FOLDER}/etc/authserver.conf ${CONTAINER_FOLDER}/authserver.conf
-7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/authserver.conf
+if [ $ARCHIVE_CONTAINER -eq 1 ]; then
+    cp ${BUILD_FOLDER}/etc/worldserver.conf ${CONTAINER_FOLDER}/worldserver.conf
+    cp ${BUILD_FOLDER}/etc/authserver.conf ${CONTAINER_FOLDER}/authserver.conf
+    7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/authserver.conf
+    
+    # clean up container folder, it should contain only 7z files
+    rm ${CONTAINER_FOLDER}/*.tar
+    rm ${CONTAINER_FOLDER}/*.conf
+fi
 
-# clean up container folder, it should contain only 7z files
-rm ${CONTAINER_FOLDER}/*.tar
-rm ${CONTAINER_FOLDER}/*.conf
 
 # phew, we're done
 DURATION=$SECONDS
