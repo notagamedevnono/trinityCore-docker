@@ -4,6 +4,8 @@ This guide assumes you know the basics of Docker and Docker-compose, and are fam
 
 - You've already run the build script in [README.md](./README.md). This would have produced a 7z archive with your container. Upload said archive to the machine that will act as your TrinityCore host.
 
+- You need to Docker 19.03 or higher on your host machine, previous versions will not work as there's a DNS resolve bug when linking the MySQL and WorldServer containers.
+
  - Create a folder to host your TrinityCore solution in - this will contain your conf files, SQL data, everything your server needs, in one location. A typical folder would be at `/opt/trinitycore`
  
 - Unpack the TrinityCore archive to wherever you want and CD to the resulting unpack folder 
