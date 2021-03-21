@@ -8,6 +8,7 @@ RUN apt-get update \
     && apt-get install -y libboost-system1.71.0 \
     && apt-get install -y libboost-filesystem1.71.0 \
     && apt-get install -y libboost-thread1.71.0 \
+    && apt-get install -y libboost-atomic-dev=1.71.0.0ubuntu2 \
     && apt-get install -y libboost-program-options1.71.0 \
     && apt-get install -y libboost-iostreams1.71.0 \
     && apt-get install -y libboost-regex1.71.0 \
