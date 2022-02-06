@@ -60,7 +60,7 @@ fi
 
 # ensure that docker is available
 echo "doing docker version check ..."
-docker --version
+docker ps -a
 
 echo "doing git version check ..."
 git --version
@@ -210,6 +210,7 @@ docker tag trinitycore:latest trinitycore:$BUILD_TAG
 docker save trinitycore:$BUILD_TAG > ${CONTAINER_FOLDER}/trinitycore.tar
 
 # stage conf files to container folder, then zip everything up
+echo "Writing container to file, this can take a while ..."
 cp ${BUILD_FOLDER}/etc/worldserver.conf ${CONTAINER_FOLDER}/worldserver.conf
 cp ${BUILD_FOLDER}/etc/authserver.conf ${CONTAINER_FOLDER}/authserver.conf
 7z a ${CONTAINER_FOLDER}/trinitycore-docker.${BUILD_TAG}.$(date +\%F).7z ${CONTAINER_FOLDER}/trinitycore.tar ${CONTAINER_FOLDER}/worldserver.conf ${CONTAINER_FOLDER}/authserver.conf
