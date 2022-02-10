@@ -13,22 +13,9 @@
 # force exit if anything fails
 set -e
 
-# repo/branch to fetch server source from. Must be trinitycore or fork thereof. 
-# To build Lich King use 
-#     REPO https://github.com/TrinityCore/TrinityCore
-#     BRANCH "3.3.5"
-#     AUTH_SERVER authserver
-#     FORK TC
-# To build Cataclym use 
-#     REPO https://github.com/The-Cataclysm-Preservation-Project
-#     BRANCH master
-#     AUTH_SERVER bnetserver
-#     FORK CPP
-REPO=https://github.com/The-Cataclysm-Preservation-Project
+REPO=https://github.com/The-Cataclysm-Preservation-Project/TrinityCore
 BRANCH=master
-AUTH_SERVER=authserver
-FORK=TC
-
+AUTH_SERVER=bnetserver
 
 # used to time build 
 SECONDS=0
@@ -53,7 +40,8 @@ BUILD_THREAD_COUNT=18
 
 # if you want to force this script to build a specific tag, set it here. Use tags only, don't built arbitrary 
 # hashes, this script hasn't been tested to work with hashes
-BUILD_TAG=
+BUILD_TAG="TDB434.20051"  # "TDB434.20051" works, breaks at TDB434.20091
+
 
 # if you want to rebuild and skip compilation and client extraction, use "--partial" switch. This is for 
 # dev/testing, so don't use this unless you know what you're doing
@@ -67,6 +55,7 @@ done
 
 # these should always be 1, unless you're debugging this script and want to easily bypass time-consuming 
 # stages that you know have already passed
+GIT_PULL=1
 INSTALL_PREREQUISITES=1
 BUILD_BINARIES=1
 CLEAN_CONTENT=1
@@ -74,6 +63,7 @@ EXTRACT_MAPS=1
 EXTRACT_VMAPS=1
 ASSEMBLE_VMAPS=1
 GENERATE_MMAPS=1
+PROCESS_SQL_SCRIPTS=1
 BUILD_CONTAINER=1
 ARCHIVE_CONTAINER=1
 
@@ -87,17 +77,17 @@ fi
 ##############################################################################################################
 # try to test as much as possible before running script so we can catch missing/broken things
 
-# ensure that docker is available
+# ensure that docker is available 
 echo "doing docker version check ..."
 docker --version
 
 echo "doing git version check ..."
 git --version
 
-echo "testing wget"
-wget --help
+echo "doing wget version check ..."
+wget --version
 
-echo "testing curl"
+echo "doing curl version check ..."
 curl --version
 
 
@@ -122,12 +112,14 @@ if [ ! -d $SRC_FOLDER ]; then
 fi
 
 # make sure we have latest changes on target branch (if we're re-building existing checkout)
-cd $SRC_FOLDER
-git reset --hard
-git clean -f
-git checkout $BRANCH # do this to re-attach to branch 
-git pull
-cd -- 
+if [ $GIT_PULL -eq 1 ]; then
+    cd $SRC_FOLDER
+    git reset --hard
+    git clean -f
+    git checkout $BRANCH # do this to re-attach to branch 
+    git pull
+    cd -- 
+fi
 
 
 # figure out the latest tag in trinity src. We build tags and tags only, because that's how civilized people 
@@ -139,8 +131,9 @@ fi
 
 
 # Now that we have the tag, check it out
-git checkout $BUILD_TAG
-
+if [ $GIT_PULL -eq 1 ]; then
+    git checkout $BUILD_TAG
+fi
 
 # construct the name of the full database file for this tag. Trinity expects this honking big sql file to be 
 # placed in its /bin folder
@@ -174,7 +167,7 @@ mkdir -p build
 cd build
 
 if [ $BUILD_BINARIES -eq 1 ]; then
-    cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER
+    cmake ../ -DCMAKE_INSTALL_PREFIX=$BUILD_FOLDER -DTOOLS=1
     make -j $BUILD_THREAD_COUNT
     make install
 fi
@@ -216,7 +209,7 @@ fi
 
 if [ $GENERATE_MMAPS -eq 1 ]; then
     mkdir -p mmaps
-    ${BUILD_FOLDER}/bin/mmaps_generator
+    ${BUILD_FOLDER}/bin/mmaps_generator --skipLiquid true
     echo "Copying mmaps"
     cp -r mmaps ${BUILD_FOLDER}/data
 fi    
@@ -226,24 +219,21 @@ fi
 cp ${BUILD_FOLDER}/etc/worldserver.conf.dist ${BUILD_FOLDER}/etc/worldserver.conf
 cp ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf.dist ${BUILD_FOLDER}/etc/${AUTH_SERVER}.conf
 
-# get sql files and put them in /sql folder
-echo "Copying sql files"
-mkdir -p ${BUILD_FOLDER}/sql
-cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}
+if [ $PROCESS_SQL_SCRIPTS -eq 1 ]; then
+    # get sql files and put them in /sql folder
+    echo "Copying sql files"
+    mkdir -p ${BUILD_FOLDER}/sql
+    cp -R $SRC_FOLDER/sql ${BUILD_FOLDER}
 
 
-# download that honking big full database file and unpack it to /bin
-if [ $FORK = "TC" ]; then
-    DB_URL="${REPO}/releases/download/${BUILD_TAG}/TDB_full_world_${BUILD_TAG/TDB/}_${TAG_DATE}.7z"
-elif [ $FORK = "CPP" ]; then
-    DB_URL="${REPO}/TrinityCore/releases/download/${BUILD_TAG}/TDB_full_${BUILD_TAG/TDB/}_${TAG_DATE}.7z"
+    # download that honking big full database file and unpack it to /bin
+    DB_URL="${REPO}/releases/download/${BUILD_TAG}/TDB_full_${BUILD_TAG/TDB/}_${TAG_DATE}.7z"
+    wget $DB_URL -O ${BUILD_FOLDER}/bin/fulldb.7z 
+    
+    # -aoa = overwrite everything with prompt
+    7z x ${BUILD_FOLDER}/bin/fulldb.7z -o${BUILD_FOLDER}/bin -aoa
+    rm ${BUILD_FOLDER}/bin/fulldb.7z
 fi
-
-
-wget $DB_URL -O ${BUILD_FOLDER}/bin/fulldb.7z
-# -aoa = overwrite everything with prompt
-7z x ${BUILD_FOLDER}/bin/fulldb.7z -o${BUILD_FOLDER}/bin -aoa
-rm ${BUILD_FOLDER}/bin/fulldb.7z
 
 # build docker image using the Dockerfile in this repo. 
 if [ $BUILD_CONTAINER -eq 1 ]; then
